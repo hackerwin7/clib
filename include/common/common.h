@@ -10,7 +10,7 @@
 #endif //CLIB_COMMON_H
 
 /* raw bytes */
-typedef struct c_byte_buffer {
+typedef struct c_byte_buffer_s {
     unsigned char * data;//free first this data, then free itself
     size_t len;
-}c_byte_buffer, * c_byte_bufferp;
+} c_byte_buffer, * c_byte_bufferp;

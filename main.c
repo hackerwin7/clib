@@ -4,6 +4,7 @@
 #include "common/common.h"
 #include "zk-lib/zk_util.h"
 #include "gzip-lib/gzip_util.h"
+#include "base64-lib/base64_util.h"
 
 int test1() {
     printf("hello world!\n");
@@ -147,7 +148,17 @@ int test5() {
     return 0;
 }
 
+int test6() {
+    char * t = "asq  @$&*% ( 层哦 的 大 所理解 dfe !!噶尔发额头层 )";
+    char des[200], udes[200];
+    base64_encode(t, des);
+    printf("%s\n", des);
+    base64_decode(des, udes);
+    printf("%s\n", udes);
+    return 0;
+}
+
 int main() {
-    test5();
+    test6();
     return 0;
 }
