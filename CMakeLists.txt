@@ -7,7 +7,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 include_directories(include)
 
 # set source path
-set(SOURCE_FILES main.c zk-lib/zk_util.h zk-lib/zk_util.c gzip-lib/gzip_util.h gzip-lib/gzip_util.c base64-lib/base64_util.h include/common/common.h base64-lib/base64_util.c lua_utils.c lua_utils.c)
+set(SOURCE_FILES main.c zk-lib/zk_util.h zk-lib/zk_util.c gzip-lib/gzip_util.h gzip-lib/gzip_util.c base64-lib/base64_util.h include/common/common.h base64-lib/base64_util.c lua_utils.c)
 
 # set lib source
 set(SOURCE_LIBS_CLIB zk-lib/zk_util.h zk-lib/zk_util.c gzip-lib/gzip_util.h gzip-lib/gzip_util.c base64-lib/base64_util.h include/common/common.h base64-lib/base64_util.c lua_utils.c)

@@ -16,46 +16,48 @@ int test1() {
 
 int test2() {
     printf("initing......\n");
-    init_zk_conn("127.0.0.1:2181");
+    zhandle_t* zpt = init_zk_conn("127.0.0.1:2181");
 
     struct String_vector * nodes = (struct String_vector *) malloc(sizeof(struct String_vector));
-    zk_get_children("/", nodes);
+    zk_get_children(zpt, "/", nodes);
     if(nodes == NULL) printf("NULL nodes\n");
     printf("%d\n", nodes->count);
     for(int i = 0; i <= nodes->count - 1; i++)
         printf("%s\n", nodes->data[i]);
 
-    int ret = zk_is_exists("/zookeeper");
+    int ret = zk_is_exists(zpt, "/zookeeper");
     if(ret)
         printf("/zookeeper is exists\n");
     else
         printf("/zookeeper is not exists\n");
 
-    ret = zk_is_exists("/rs");
+    ret = zk_is_exists(zpt, "/rs");
     if(ret)
         printf("/rs is exists\n");
     else
         printf("/rs is not exists\n");
 
-    zk_create("/rs", "init");
+    zk_create(zpt, "/rs", "init");
 
-    ret = zk_is_exists("/rs");
+    ret = zk_is_exists(zpt, "/rs");
     if(ret)
         printf("/rs is exists\n");
     else
         printf("/rs is not exists\n");
 
-    char * data = zk_get("/rs");
+    char data[100];
+    ret = zk_get(zpt, "/rs", data);
     printf("%s\n", data);
 
-    zk_set("/rs", "changed");
+    zk_set(zpt, "/rs", "changed");
 
-    char * change_data = zk_get("/rs");
+    char change_data[100];
+    ret = zk_get(zpt, "/rs", change_data);
     printf("%s\n", change_data);
 
-    zk_delete("/rs");
+    zk_delete(zpt, "/rs");
 
-    ret = zk_is_exists("/rs");
+    ret = zk_is_exists(zpt, "/rs");
 
     if(ret)
         printf("/rs is exists\n");
@@ -67,15 +69,16 @@ int test2() {
         nodes = NULL;
     }
 
-    close_zk_conn();
+    close_zk_conn(zpt);
 
     return 0;
 }
 
 int test3() {
     gzip_datap src, des, udes;
-    //src = gzip_data_create("hello world");
-    src = gzip_data_create("我嚓嚓嚓嚓嚓嚓嚓擦擦擦擦擦擦!@#!@$!$  ()dest");
+    //src = gzip_data_create_str("hello world");
+    src = gzip_data_create_str("我嚓嚓嚓嚓嚓嚓嚓擦擦擦擦擦擦!@#!@$!$  ()dest");
+    printf("src len = %zu\n", strlen((char *) src->data));
     des = (gzip_datap) malloc(sizeof(gzip_data));
     udes = (gzip_datap) malloc(sizeof(gzip_data));
     des->len = 1;
@@ -83,7 +86,7 @@ int test3() {
     printf("%zu\n", des->len);
     gzip_decompress(des, udes);
     udes->data[udes->len] = '\0';
-    printf("%s\n", udes->data);
+    printf("recover str :\n%s\n", udes->data);
     return 0;
 }
 
@@ -159,6 +162,6 @@ int test6() {
 }
 
 int main() {
-    test6();
+    test3();
     return 0;
 }

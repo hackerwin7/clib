@@ -12,15 +12,27 @@
 #define COMPRESSION_LEVEL 6
 
 /**
- * create gzip data by string
+ * raw data create gzip struct data
  * @param msg
+ * @param len
+ * @return gzip struct data
  */
-gzip_datap gzip_data_create(char * msg) {
-    size_t len = strlen(msg);
-    gzip_datap pt = (gzip_datap)malloc(sizeof(gzip_data));
+gzip_datap gzip_data_create(unsigned char * msg, size_t len) {
+    if(!msg || len <= 0)
+        return NULL;
+    gzip_datap pt = (gzip_datap) malloc(sizeof(gzip_data));
     memcpy(pt->data, msg, len);
     pt->len = len;
     return pt;
+}
+
+/**
+ * create gzip data by string
+ * @param msg
+ * @return
+ */
+gzip_datap gzip_data_create_str(char * msg) {
+    return gzip_data_create((unsigned char *)msg, strlen(msg));
 }
 
 /**
