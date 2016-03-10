@@ -199,9 +199,10 @@ int test8() {
     gzip_datap des = gzip_data_create();
     gzip_datap ude = gzip_data_create();
     gzip_compress(src, des);
+    printf("%zu\n", src->len);
     printf("%zu\n", des->len);
     gzip_decompress(des, ude);
-    printf("%zu\n%s\n", ude->len, ude->data);
+    printf("%s\n%zu\n", ude->data, ude->len);
     return 0;
 }
 
