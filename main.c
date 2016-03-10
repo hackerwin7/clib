@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include "string.h"
+#include "unistd.h"
 
 #include "common/common.h"
 #include "zk-lib/zk_util.h"
 #include "gzip-lib/gzip_util.h"
 #include "base64-lib/base64_util.h"
+
+/* declare header */
+void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx);
 
 int test1() {
     printf("hello world!\n");
@@ -161,7 +165,47 @@ int test6() {
     return 0;
 }
 
+int t_regist_watch(zhandle_t *zh, const char *path, char *data) {
+    zk_get_w(zh, path, data, t_change_watcher, NULL);
+    return 0;
+}
+
+void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx) {
+    if(state == ZOO_CONNECTED_STATE) {
+        if(type == ZOO_CHANGED_EVENT) {
+            char data[100];
+            t_regist_watch(zh, path, data);
+            printf("change event trigger change watcher , the path = %s, data = %s\n", path, data);
+        }
+    }
+}
+
+int test7() {
+    printf("hello test7\n");
+    zhandle_t * zh = init_zk_conn("127.0.0.1:2181");
+    int i = 0;
+    char data[500];
+    zk_get_w(zh, "/watcher", data, t_change_watcher, NULL);
+    printf("init watcher data = %s\n", data);
+    while (i++ <= 100) {
+        zk_get(zh, "/watcher", data);
+        printf("while getting data = %s ......\n", data);
+        sleep(3);
+    }
+}
+
+int test8() {
+    gzip_datap src = gzip_data_create_str("ffewfae1123 色他fff!!");
+    gzip_datap des = gzip_data_create();
+    gzip_datap ude = gzip_data_create();
+    gzip_compress(src, des);
+    printf("%zu\n", des->len);
+    gzip_decompress(des, ude);
+    printf("%zu\n%s\n", ude->len, ude->data);
+    return 0;
+}
+
 int main() {
-    test2();
+    test8();
     return 0;
 }

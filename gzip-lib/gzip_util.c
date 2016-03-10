@@ -17,7 +17,7 @@
  * @param len
  * @return gzip struct data
  */
-gzip_datap gzip_data_create(unsigned char * msg, size_t len) {
+gzip_datap gzip_data_create_origin(unsigned char *msg, size_t len) {
     if(!msg || len <= 0)
         return NULL;
     gzip_datap pt = (gzip_datap) malloc(sizeof(gzip_data));
@@ -32,7 +32,16 @@ gzip_datap gzip_data_create(unsigned char * msg, size_t len) {
  * @return
  */
 gzip_datap gzip_data_create_str(char * msg) {
-    return gzip_data_create((unsigned char *)msg, strlen(msg));
+    return gzip_data_create_origin((unsigned char *) msg, strlen(msg));
+}
+
+/**
+ * create gzip memory empty data
+ * @return data pointer
+ */
+gzip_datap gzip_data_create() {
+    gzip_datap p = (gzip_datap) malloc(sizeof(gzip_data));
+    return p;
 }
 
 /**
@@ -56,7 +65,7 @@ void gzip_data_free(gzip_datap pt) {
  */
 int gzip_compress(gzip_datap src, gzip_datap des) {
     if(src == NULL || des == NULL ||
-            src->len <=0 || des->len <= 0)
+            src->len <=0)
         return -1;
     /* init */
     size_t slen = src->len; //buffer length can not use strlen !!!!!!!!!!!!!!!!! unless the raw data is string (null-terminated)
@@ -118,9 +127,10 @@ int gzip_compress(gzip_datap src, gzip_datap des) {
  * @param des
  */
 int gzip_decompress(gzip_datap src, gzip_datap des) {
+    if(!src || !des || src->len <= 0)
+        return -1;
     /* init */
     size_t slen = src->len;
-    printf("init decompress len = %zu\n", slen);
     int sig = 0;
     unsigned have = 0;
     z_streamp streamp = (z_streamp)malloc(sizeof(z_stream));

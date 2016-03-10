@@ -33,7 +33,13 @@ gzip_datap gzip_data_create_str(char *msg);
  * @param len
  * @return gzip struct data
  */
-gzip_datap gzip_data_create(unsigned char * msg, size_t len);
+gzip_datap gzip_data_create_origin(unsigned char *msg, size_t len);
+
+/*
+ * init memory for this gzip data format
+ * @return memory data pointer
+ */
+gzip_datap gzip_data_create();
 
 /* free gzip data */
 void gzip_data_free(gzip_datap pt);

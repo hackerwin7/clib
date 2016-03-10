@@ -44,6 +44,19 @@ int zk_get(zhandle_t * zk_handle, char * zk_path, char * get_data) {
         return ZOO_ERROR;
 }
 
+/*
+ * test callback
+ */
+int zk_get_w(zhandle_t * zk_handle, const char * zk_path, char * get_data, watcher_fn watcher, void * ctx) {
+    int buff_len = 100;
+    int ret = zoo_wget(zk_handle, zk_path, watcher, ctx, get_data, &buff_len, NULL);
+    get_data[buff_len] = '\0';
+    if(ret == ZOK)
+        return ZOO_OK;
+    else
+        return ZOO_ERROR;
+}
+
 /**
  * judge the zookeeper node is exists or not
  * @param zk_handle

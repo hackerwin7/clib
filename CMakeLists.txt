@@ -15,35 +15,18 @@ set(SOURCE_LIBS_CLIB ${SOURCE_FILES}
         include/zlib
         include/lua)
 
-# set library
+# set library search
 link_directories(lib)
-
-## generate executable .exe
-add_executable(clib ${SOURCE_FILES})
 
 # generate library
 add_library(clib_utils SHARED ${SOURCE_LIBS_CLIB})
-set_target_properties(clib_utils PROPERTIES VERSION 0.1.0 SOVERSION 0.1.0)
 add_library(clib_utils_static STATIC ${SOURCE_LIBS_CLIB})
 set_target_properties(clib_utils_static PROPERTIES OUTPUT_NAME "clib_utils")
 
-# link the extarnal lib
-target_link_libraries(clib
-        clib_utils
-        clib_utils_static
-        "-Wl,--whole-archive"
-        zookeeper_mt
-        z
-        "-Wl,--no-whole-archive"
-        )
+# generate executable
+add_executable(clib ${SOURCE_FILES})
 
-target_link_libraries(clib_utils
-        "-Wl,--whole-archive"
-        zookeeper_mt z
-        "-Wl,--no-whole-archive"
-        )
-target_link_libraries(clib_utils_static
-        "-Wl,--whole-archive"
-        zookeeper_mt z
-        "-Wl,--no-whole-archive"
-        )
+# link library
+target_link_libraries(clib_utils zookeeper_mt z)
+target_link_libraries(clib_utils_static zookeeper_mt z)
+target_link_libraries(clib zookeeper_mt z)

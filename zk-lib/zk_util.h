@@ -29,7 +29,7 @@
 zhandle_t * init_zk_conn(char * zk_conn_str);
 
 /**
- * zk getter
+ * zk getter (no watcher)
  * @zk_handle zk_handle that have been initialized
  * @zk_path
  * @get_data
@@ -39,6 +39,11 @@ zhandle_t * init_zk_conn(char * zk_conn_str);
  *              etc.
  */
 int zk_get(zhandle_t * zk_handle, char * zk_path, char * get_data);
+
+/*
+ * test callback
+ */
+int zk_get_w(zhandle_t * zk_handle, const char * zk_path, char * get_data, watcher_fn watcher, void * ctx);
 
 /**
  * zookeeper exists path
