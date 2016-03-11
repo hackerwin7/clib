@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+/** message main body **/
+message NGmsg {
+
+    /** status **/
+    optional int32 c = 1;
+
+    /** timestamp **/
+    optional int64 rtm = 2;
+
+    /** ip **/
+    optional string ip = 3;
+
+    /** log content **/
+    optional string d = 4;
+
+}

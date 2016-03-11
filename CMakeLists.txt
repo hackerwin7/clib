@@ -4,16 +4,18 @@ project(clib)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # set hadler path
-include_directories(include)
+include_directories(include common)
 
 # set source path
-set(SOURCE_FILES main.c zk-lib/zk_util.h zk-lib/zk_util.c gzip-lib/gzip_util.h gzip-lib/gzip_util.c base64-lib/base64_util.h include/common/common.h base64-lib/base64_util.c)
+set(SOURCE_FILES main.c zk-lib/zk_util.h zk-lib/zk_util.c gzip-lib/gzip_util.h gzip-lib/gzip_util.c base64-lib/base64_util.h
+        base64-lib/base64_util.c protobuf/ngmsg.pb-c.h protobuf/ngmsg.pb-c.c protobuf/ngmsg_util.h protobuf/ngmsg_util.c common/common.h common/common.c)
 
 # set lib source
 set(SOURCE_LIBS_CLIB ${SOURCE_FILES}
         include/zookeeper
         include/zlib
-        include/lua)
+        include/lua
+        include/protobuf-c)
 
 # set library search
 link_directories(lib)
@@ -27,6 +29,6 @@ set_target_properties(clib_utils_static PROPERTIES OUTPUT_NAME "clib_utils")
 add_executable(clib ${SOURCE_FILES})
 
 # link library
-target_link_libraries(clib_utils zookeeper_mt z)
-target_link_libraries(clib_utils_static zookeeper_mt z)
-target_link_libraries(clib zookeeper_mt z)
+target_link_libraries(clib_utils protobuf-c zookeeper_mt z)
+target_link_libraries(clib_utils_static protobuf-c zookeeper_mt z)
+target_link_libraries(clib protobuf-c zookeeper_mt z)

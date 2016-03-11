@@ -2,10 +2,10 @@
 #include "string.h"
 #include "unistd.h"
 
-#include "common/common.h"
 #include "zk-lib/zk_util.h"
 #include "gzip-lib/gzip_util.h"
 #include "base64-lib/base64_util.h"
+#include "protobuf/ngmsg_util.h"
 
 /* declare header */
 void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx);
@@ -206,7 +206,135 @@ int test8() {
     return 0;
 }
 
+int test9() {
+    NGmsg msg = pb_build_ng_msg(123, (int64_t)1432700228559, "127.0.0.1", "{\n"
+            "\"web-app\": {\n"
+            "\"servlet\": [\n"
+            "{\n"
+            "\"servlet-name\": \"cofaxCDS\",\n"
+            "\"servlet-class\": \"org.cofax.cds.CDSServlet\",\n"
+            "\"init-param\": {\n"
+            "\"configGlossary:installationAt\": \"Philadelphia, PA\",\n"
+            "\"configGlossary:adminEmail\": \"ksm@pobox.com\",\n"
+            "\"configGlossary:poweredBy\": \"Cofax\",\n"
+            "\"configGlossary:poweredByIcon\": \"/images/cofax.gif\",\n"
+            "\"configGlossary:staticPath\": \"/content/static\",\n"
+            "\"templateProcessorClass\": \"org.cofax.WysiwygTemplate\",\n"
+            "\"templateLoaderClass\": \"org.cofax.FilesTemplateLoader\",\n"
+            "\"templatePath\": \"templates\",\n"
+            "\"templateOverridePath\": \"\",\n"
+            "\"defaultListTemplate\": \"listTemplate.htm\",\n"
+            "\"defaultFileTemplate\": \"articleTemplate.htm\",\n"
+            "\"useJSP\": false,\n"
+            "\"jspListTemplate\": \"listTemplate.jsp\",\n"
+            "\"jspFileTemplate\": \"articleTemplate.jsp\",\n"
+            "\"cachePackageTagsTrack\": 200,\n"
+            "\"cachePackageTagsStore\": 200,\n"
+            "\"cachePackageTagsRefresh\": 60,\n"
+            "\"cacheTemplatesTrack\": 100,\n"
+            "\"cacheTemplatesStore\": 50,\n"
+            "\"cacheTemplatesRefresh\": 15,\n"
+            "\"cachePagesTrack\": 200,\n"
+            "\"cachePagesStore\": 100,\n"
+            "\"cachePagesRefresh\": 10,\n"
+            "\"cachePagesDirtyRead\": 10,\n"
+            "\"searchEngineListTemplate\": \"forSearchEnginesList.htm\",\n"
+            "\"searchEngineFileTemplate\": \"forSearchEngines.htm\",\n"
+            "\"searchEngineRobotsDb\": \"WEB-INF/robots.db\",\n"
+            "\"useDataStore\": true,\n"
+            "\"dataStoreClass\": \"org.cofax.SqlDataStore\",\n"
+            "\"redirectionClass\": \"org.cofax.SqlRedirection\",\n"
+            "\"dataStoreName\": \"cofax\",\n"
+            "\"dataStoreDriver\": \"com.microsoft.jdbc.sqlserver.SQLServerDriver\",\n"
+            "\"dataStoreUrl\": \"jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon\",\n"
+            "\"dataStoreUser\": \"sa\",\n"
+            "\"dataStorePassword\": \"dataStoreTestQuery\",\n"
+            "\"dataStoreTestQuery\": \"SET NOCOUNT ON;select test='test';\",\n"
+            "\"dataStoreLogFile\": \"/usr/local/tomcat/logs/datastore.log\",\n"
+            "\"dataStoreInitConns\": 10,\n"
+            "\"dataStoreMaxConns\": 100,\n"
+            "\"dataStoreConnUsageLimit\": 100,\n"
+            "\"dataStoreLogLevel\": \"debug\",\n"
+            "\"maxUrlLength\": 500\n"
+            "}\n"
+            "},\n"
+            "{\n"
+            "\"servlet-name\": \"cofaxEmail\",\n"
+            "\"servlet-class\": \"org.cofax.cds.EmailServlet\",\n"
+            "\"init-param\": {\n"
+            "\"mailHost\": \"mail1\",\n"
+            "\"mailHostOverride\": \"mail2\"\n"
+            "}\n"
+            "},\n"
+            "{\n"
+            "\"servlet-name\": \"cofaxAdmin\",\n"
+            "\"servlet-class\": \"org.cofax.cds.AdminServlet\"\n"
+            "},\n"
+            "{\n"
+            "\"servlet-name\": \"fileServlet\",\n"
+            "\"servlet-class\": \"org.cofax.cds.FileServlet\"\n"
+            "},\n"
+            "{\n"
+            "\"servlet-name\": \"cofaxTools\",\n"
+            "\"servlet-class\": \"org.cofax.cms.CofaxToolsServlet\",\n"
+            "\"init-param\": {\n"
+            "\"templatePath\": \"toolstemplates/\",\n"
+            "\"log\": 1,\n"
+            "\"logLocation\": \"/usr/local/tomcat/logs/CofaxTools.log\",\n"
+            "\"logMaxSize\": \"\",\n"
+            "\"dataLog\": 1,\n"
+            "\"dataLogLocation\": \"/usr/local/tomcat/logs/dataLog.log\",\n"
+            "\"dataLogMaxSize\": \"\",\n"
+            "\"removePageCache\": \"/content/admin/remove?cache=pages&id=\",\n"
+            "\"removeTemplateCache\": \"/content/admin/remove?cache=templates&id=\",\n"
+            "\"fileTransferFolder\": \"/usr/local/tomcat/webapps/content/fileTransferFolder\",\n"
+            "\"lookInContext\": 1,\n"
+            "\"adminGroupID\": 4,\n"
+            "\"betaServer\": true\n"
+            "}\n"
+            "}\n"
+            "],\n"
+            "\"servlet-mapping\": {\n"
+            "\"cofaxCDS\": \"/\",\n"
+            "\"cofaxEmail\": \"/cofaxutil/aemail/*\",\n"
+            "\"cofaxAdmin\": \"/admin/*\",\n"
+            "\"fileServlet\": \"/static/*\",\n"
+            "\"cofaxTools\": \"/tools/*\"\n"
+            "},\n"
+            "\"taglib\": {\n"
+            "\"taglib-uri\": \"cofax.tld\",\n"
+            "\"taglib-location\": \"/WEB-INF/tlds/cofax.tld\"\n"
+            "}\n"
+            "}\n"
+            "}");
+    printf("%d %ld\n", msg.c, (long int) msg.rtm);
+    c_byte_bufferp buff = c_byte_buffer_create();
+    pb_serialize_ng_msg(msg, buff);
+    printf("%zu\n", buff->len);
+    //NGmsg dmsgp = NGMSG__INIT;
+    NGmsg dmsgp;
+    pb_deserialize_ng_msg(buff, &dmsgp);//note the value-param
+    printf("%d %ld %s\n", dmsgp.c, (long int)dmsgp.rtm, dmsgp.ip);
+    printf("%s\n", dmsgp.d);
+}
+
+int test10() {
+    NGmsg msg = NGMSG__INIT;
+    msg.c = 123;
+    msg.has_c = 1;
+    msg.rtm = (int64_t)1432700228559;
+    msg.has_rtm = 1;
+    size_t len = ngmsg__get_packed_size(&msg);
+    void * buff = malloc(len);
+    printf("%d %ld\n", msg.c, msg.rtm);
+    ngmsg__pack(&msg, buff);
+    NGmsg * mp;
+    mp = ngmsg__unpack(NULL, len, buff);
+    printf("%d\n", mp->c);
+    printf("%ld\n", (long int)mp->rtm);
+}
+
 int main() {
-    test8();
+    test9();
     return 0;
 }
