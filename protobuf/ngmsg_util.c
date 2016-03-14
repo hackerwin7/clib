@@ -68,3 +68,34 @@ int pb_deserialize_ng_msg(c_byte_bufferp buffer, NGmsg* msgp) {
     msgp->d = tmsgp->d;
     return 0;
 }
+
+/**
+ * transfer the bytes for the lua call
+ * @param c
+ * @param rtm
+ * @param ip
+ * @param d
+ * @return bytes
+ */
+c_byte_buffer pb_tramsfer(int c, int64_t rtm, const char * ip, const char * d) {
+    NGmsg msg = pb_build_ng_msg(c, rtm, ip, d);
+    c_byte_bufferp buff = c_byte_buffer_create();
+    pb_serialize_ng_msg(msg, buff);
+    return *buff;
+}
+
+/*
+ * de-trasfer for the lua call
+ * @param buffer
+ * @param msgp
+ * @return status
+ */
+int pb_de_transfer(c_byte_buffer buffer, ngmsgp msgp) {
+    NGmsg ngmsg;
+    pb_deserialize_ng_msg(&buffer, &ngmsg);
+    msgp->c = ngmsg.c;
+    msgp->rtm = ngmsg.rtm;
+    strcpy(msgp->ip, ngmsg.ip);
+    strcpy(msgp->d, ngmsg.d);
+    return 0;
+}
