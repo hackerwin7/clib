@@ -55,3 +55,18 @@ c_byte_bufferp c_byte_buffer_create_cpy(void * buff, size_t len) {
     memcpy(p->data, buff, len);
     return p;
 }
+
+/**
+ * free the bytes pointer
+ * @param pt
+ */
+void c_byte_buffer_free(c_byte_bufferp pt) {
+    if(pt) {
+        if(pt->data) {
+            free(pt->data);
+            pt->data = NULL;
+        }
+        free(pt);
+        pt = NULL;
+    }
+}

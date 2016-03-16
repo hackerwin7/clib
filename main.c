@@ -6,9 +6,85 @@
 #include "gzip-lib/gzip_util.h"
 #include "base64-lib/base64_util.h"
 #include "protobuf/ngmsg_util.h"
-
+#include "common/gc_ring_buffer.h"
 /* declare header */
 void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx);
+
+/********************************* for lua call gc or not gc ????? *********************************/
+/* zk */
+//use default
+
+/* gzip */
+int gzip_compress_lu(void * s_bytes, size_t s_len, void * d_bytes, size_t * d_len) {
+    gzip_datap src = gzip_data_create_origin(s_bytes, s_len);
+    gzip_datap des = gzip_data_create();
+    gzip_compress(src, des);
+    //return set value param
+    memcpy(d_bytes, des->data, des->len);
+    *d_len = des->len;
+    //free
+    gzip_data_free(src);
+    gzip_data_free(des);
+    return 0;
+}
+
+int gzip_de_compress_lu(void * s_bytes, size_t s_len, void * d_bytes, size_t * d_len) {
+    gzip_datap src = gzip_data_create_origin(s_bytes, s_len);
+    gzip_datap des = gzip_data_create();
+    gzip_decompress(src, des);
+    //return set value param
+    memcpy(d_bytes, des->data, des->len);
+    *d_len = des->len;
+    //free
+    gzip_data_free(src);
+    gzip_data_free(des);
+    return 0;
+}
+
+/* base64 */
+//use default
+
+/* protobuf */
+int pb_transfer_lu(int c, int64_t rtm, const char *ip, const char *d, c_byte_bufferp buffer) {
+    if(buffer && buffer->data)
+        c_byte_buffer_free(buffer);//free old mem
+    if(!buffer) {
+        buffer = c_byte_buffer_create();//only buffer!=NULL data==NULL can pass it
+        put_ring_gc(buffer);// put into gc ring buffer
+    }
+    NGmsg msg = pb_build_ng_msg(c, rtm, ip, d);
+    pb_serialize_ng_msg(msg, buffer);
+    // c_byte_buffer_free(buffer); //gc will free the mem later
+    return 0;
+}
+
+//ngmsg struct for lua call
+typedef struct pb_msg_s {
+    int c;
+    int64_t rtm;
+    char ip[20];
+    char *d;
+}pb_msg, *pb_msgp;
+
+int pb_de_transfer_lu(c_byte_bufferp buffer, pb_msgp pb) {
+    if(!pb)
+        pb = (pb_msgp) malloc_ring_gc(sizeof(pb_msg));
+    NGmsg nmsg = NGMSG__INIT;
+    pb_deserialize_ng_msg(buffer, &nmsg);
+    pb->c = nmsg.c;
+    pb->rtm = nmsg.rtm;
+    memcpy(pb->ip, nmsg.ip, strlen(nmsg.ip));
+    size_t d_len = strlen(nmsg.d);
+    if(!pb->d || d_len >= 10000) {
+        if(pb->d)
+            free(pb->d);
+        pb->d = malloc_ring_gc(d_len);
+    }
+    memcpy(pb->d, nmsg.d, d_len);
+    return 0;
+}
+
+/********************************* for test *********************************/
 
 int test1() {
     printf("hello world!\n");

@@ -26,3 +26,6 @@ c_byte_bufferp c_byte_buffer_create_str(const char * str);
 
 /* copy from bytes */
 c_byte_bufferp c_byte_buffer_create_cpy(void * buff, size_t len);
+
+/* free */
+void c_byte_buffer_free(c_byte_bufferp p);

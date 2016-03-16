@@ -9,6 +9,7 @@
 #include "stdint.h"
 
 #include "ngmsg_util.h"
+#include "gc_ring_buffer.h"
 
 /**
  * build the ng msg
@@ -26,10 +27,14 @@ NGmsg pb_build_ng_msg(int c, int64_t rtm, const char * ip, const char * d) {
     msg.has_c = 1;// save into the buffer and deserialize the data have it
     msg.rtm = rtm;
     msg.has_rtm = 1;
-    msg.ip = (char *) malloc(ip_len);
-    memcpy(msg.ip, ip, ip_len);
-    msg.d = (char *) malloc(d_len);
-    memcpy(msg.d, d, d_len);
+//    msg.ip = (char *) malloc(ip_len);
+//    memcpy(msg.ip, ip, ip_len);
+//    msg.d = (char *) malloc(d_len);
+//    memcpy(msg.d, d, d_len);
+
+    //modify the malloc
+    msg.ip = (char *)ip;
+    msg.d = (char *)d;
     return msg;
 }
 
@@ -41,11 +46,9 @@ NGmsg pb_build_ng_msg(int c, int64_t rtm, const char * ip, const char * d) {
  */
 int pb_serialize_ng_msg(NGmsg msg, c_byte_bufferp buffer) {
     size_t  len = ngmsg__get_packed_size(&msg);
-    void * buff = malloc(len);
-    ngmsg__pack(&msg, buff);
+    buffer->data = malloc_ring_gc(len);//put into gc ring buffer
+    ngmsg__pack(&msg, buffer->data);
     buffer->len = len;
-    buffer->data = malloc(len);
-    memcpy(buffer->data, buff, len);
     return 0;
 }
 
@@ -53,7 +56,7 @@ int pb_serialize_ng_msg(NGmsg msg, c_byte_bufferp buffer) {
  * deserialize from the buffer bytes
  * @param buffer
  * @param msgp
- * @return status
+ * @return statuss
  */
 int pb_deserialize_ng_msg(c_byte_bufferp buffer, NGmsg* msgp) {
     if (!buffer)
@@ -66,36 +69,5 @@ int pb_deserialize_ng_msg(c_byte_bufferp buffer, NGmsg* msgp) {
     msgp->rtm = tmsgp->rtm;
     msgp->ip = tmsgp->ip;
     msgp->d = tmsgp->d;
-    return 0;
-}
-
-/**
- * transfer the bytes for the lua call
- * @param c
- * @param rtm
- * @param ip
- * @param d
- * @return bytes
- */
-c_byte_buffer pb_tramsfer(int c, int64_t rtm, const char * ip, const char * d) {
-    NGmsg msg = pb_build_ng_msg(c, rtm, ip, d);
-    c_byte_bufferp buff = c_byte_buffer_create();
-    pb_serialize_ng_msg(msg, buff);
-    return *buff;
-}
-
-/*
- * de-trasfer for the lua call
- * @param buffer
- * @param msgp
- * @return status
- */
-int pb_de_transfer(c_byte_buffer buffer, ngmsgp msgp) {
-    NGmsg ngmsg;
-    pb_deserialize_ng_msg(&buffer, &ngmsg);
-    msgp->c = ngmsg.c;
-    msgp->rtm = ngmsg.rtm;
-    strcpy(msgp->ip, ngmsg.ip);
-    strcpy(msgp->d, ngmsg.d);
     return 0;
 }
