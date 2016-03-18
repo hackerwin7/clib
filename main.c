@@ -1,12 +1,18 @@
 #include <stdio.h>
 #include "string.h"
 #include "unistd.h"
+#include <ctype.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include <sys/time.h>
 
 #include "zk-lib/zk_util.h"
 #include "gzip-lib/gzip_util.h"
 #include "base64-lib/base64_util.h"
 #include "protobuf/ngmsg_util.h"
 #include "common/gc_ring_buffer.h"
+#include "librdkafka/rdkafka.h"
 /* declare header */
 void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx);
 
@@ -410,7 +416,138 @@ int test10() {
     printf("%ld\n", (long int)mp->rtm);
 }
 
+void t_rd_logger(const rd_kafka_t *rkt, int level, const char *fac, const char *buf) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    fprintf(stderr, "%u.%03u RDKAFKA-%i-%s: %s: %s\n",
+            (int)tv.tv_sec, (int)(tv.tv_usec / 1000),
+            level, fac, rkt ? rd_kafka_name(rkt) : NULL, buf);
+}
+
+void t_msg_delivered(rd_kafka_t *rk,
+                     void *payload, size_t len,
+                     int error_code,
+                     void *opaque, void *msg_opaque) {
+
+    if (error_code)
+        fprintf(stderr, "%% Message delivery failed: %s\n",
+                rd_kafka_err2str(error_code));
+    else
+        fprintf(stderr, "%% Message delivered (%zd bytes)\n", len);
+}
+
+static void t_msg_delivered2(rd_kafka_t *rk,
+                             const rd_kafka_message_t *rkmessage, void *opaque) {
+    if (rkmessage->err)
+        fprintf(stderr, "%% Message delivery failed: %s\n",
+                rd_kafka_message_errstr(rkmessage));
+    else
+        fprintf(stderr,
+                "%% Message delivered (%zd bytes, offset %"PRId64", "
+                        "partition %"PRId32")\n",
+                rkmessage->len, rkmessage->offset, rkmessage->partition);
+}
+
+/* test for librdkafka */
+int test11() {
+    // basic var
+    char * brokers_list = "localhost:9092";
+    char * topic = "console";
+    int partition = RD_KAFKA_PARTITION_UA;
+    char err[1024] = {'\0'};
+    char tmp[128];
+
+    // rd kafka statement
+    rd_kafka_t * rkt = NULL;
+    rd_kafka_conf_t * rkct = rd_kafka_conf_new();
+    rd_kafka_conf_set_log_cb(rkct, t_rd_logger);
+    rd_kafka_topic_t * rktt = NULL;
+    rd_kafka_topic_conf_t * rktct = rd_kafka_topic_conf_new();
+
+    // config
+    snprintf(tmp, sizeof(tmp), "%i", SIGIO);
+    rd_kafka_conf_set(rkct, "internal.termination.signal", tmp, NULL, 0);
+    rd_kafka_conf_set(rkct, "compression.codec", "snappy", err, sizeof(err));
+
+    // producer
+    char buff[2048];
+    int sendcnt = 0;
+
+    //  producer config
+    rd_kafka_topic_conf_set(rktct, "produce.offset.report", "true", err, sizeof(err));
+    rd_kafka_conf_set_dr_msg_cb(rkct, t_msg_delivered2);
+
+    // create rd kafka handle
+    rkt = rd_kafka_new(RD_KAFKA_PRODUCER, rkct, err, sizeof(err));
+    if(!rkt) {
+        fprintf(stderr, "%% Failed to create new producer: %s\n", err);
+        exit(1);
+    }
+    rd_kafka_set_log_level(rkt, LOG_DEBUG);
+
+    // add broker
+    if(!rd_kafka_brokers_add(rkt, brokers_list)) {
+        fprintf(stderr, "%% No valid brokers specified\n");
+        exit(1);
+    }
+
+    // create topic
+    rktt = rd_kafka_topic_new(rkt, topic, rktct);
+    rktct = NULL;
+
+    // send msg
+    int i = 0;
+    while (i++ <= 100) {
+        char numstr[10];
+        strcpy(buff, "hello kafka ");
+        sprintf(numstr, "%d", i);
+        strcat(buff, numstr);
+        size_t len = strlen(buff);
+        if(rd_kafka_produce(rktt, partition, RD_KAFKA_MSG_F_COPY, buff, len, NULL, 0, NULL) == -1) {
+            sprintf(stderr, "%% Failed to produce to topic %s partition %i: %s\n", rd_kafka_topic_name(rktt), partition, rd_kafka_err2str(rd_kafka_last_error()));
+            rd_kafka_poll(rkt, 0);
+            continue;
+        }
+        sendcnt++;
+        rd_kafka_poll(rkt, 0);
+    }
+
+    // destroy
+    rd_kafka_poll(rkt, 0);
+    while (rd_kafka_outq_len(rkt) > 0)
+        rd_kafka_poll(rkt, 100);
+    rd_kafka_topic_destroy(rktt);
+    rd_kafka_destroy(rkt);
+    if(rktct)
+        rd_kafka_topic_conf_destroy(rktct);
+    int run = 5;
+    while (run-- && rd_kafka_wait_destroyed(1000) == -1)
+        printf("Waiting for librdkafka to decommossion\n");
+    if(run <= 0)
+        rd_kafka_dump(stdout, rkt);
+
+    return 0;
+}
+
+/* kafka producer handler */
+typedef struct tu_rdkafka_producer_s {
+    rd_kafka_t * rk;
+    rd_kafka_conf_t * rk_conf;
+    rd_kafka_topic_t * rk_topic[100]; //max 100 topics
+    rd_kafka_topic_conf_t * rk_topic_conf;// only one topic conf
+    char err_msg[1024];
+    char broker_list[1024];
+    char topics[100][64];
+    int topic_len;
+} tu_rdkafka_producer, *tu_rdkafka_producerp;
+
+int test12() {
+    tu_rdkafka_producerp p = (tu_rdkafka_producerp) malloc(sizeof(tu_rdkafka_producer));
+    printf("%zu\n", sizeof(p->err_msg));
+    return 0;
+}
+
 int main() {
-    test9();
+    test12();
     return 0;
 }
