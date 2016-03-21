@@ -5,6 +5,13 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "sys/socket.h"
+#include "sys/ioctl.h"
+#include "netinet/in.h"
+#include "net/if.h"
+#include "arpa/inet.h"
+#include "unistd.h"
+
 #include "common.h"
 
 /**
@@ -69,4 +76,28 @@ void c_byte_buffer_free(c_byte_bufferp pt) {
         free(pt);
         pt = NULL;
     }
+}
+
+/**
+ * get local machine ip
+ * @return ip
+ */
+char * get_local_ip() {
+    int fd;
+    struct ifreq ifr;
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, "enp0s25", IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    char * ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+    if(strcmp(ip, "0.0.0.0") == 0) {
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+    }
+    return ip;
 }

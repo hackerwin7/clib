@@ -6,6 +6,13 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <sys/time.h>
+#include "sys/types.h"
+#include "sys/socket.h"
+#include "sys/ioctl.h"
+#include "netinet/in.h"
+#include "net/if.h"
+#include "arpa/inet.h"
+#include "ifaddrs.h"
 
 #include "zk-lib/zk_util.h"
 #include "gzip-lib/gzip_util.h"
@@ -13,6 +20,7 @@
 #include "protobuf/ngmsg_util.h"
 #include "common/gc_ring_buffer.h"
 #include "librdkafka/rdkafka.h"
+#include "kafka/kafka_util.h"
 /* declare header */
 void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx);
 
@@ -547,7 +555,60 @@ int test12() {
     return 0;
 }
 
+int test13() {
+    u_rdkafka_producerp producer = u_rdkafka_producer_init("localhost:9092");
+    u_rdkafka_add_topic(producer, "console");
+    char * str = "kk monitor for librdkafka";
+    u_rdkafka_send(producer, "console", str, strlen(str), NULL, 0);
+    u_rdkafka_producer_close(producer);
+    return 0;
+}
+
+int test14() {
+    int fd;
+    struct ifreq ifr;
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, "enp0s25", IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    char * ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+    if(strcmp(ip, "0.0.0.0") == 0) {
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+    }
+    printf("%s\n", ip);
+    return 0;
+}
+
+void timer_calc(int signum) {
+    printf("timer task running...\n");
+}
+
+int test15() {
+    struct sigaction sa;
+    struct itimerval timer;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = &timer_handler;
+    sigaction(SIGVTALRM, &sa, NULL);
+
+    timer.it_value.tv_sec = 0;
+    timer.it_value.tv_usec = 250000;
+    timer.it_interval.tv_sec = 0;
+    timer.it_interval.tv_usec = 250000;
+    setitimer(ITIMER_VIRTUAL, &timer, NULL);
+
+    while (1);
+
+    return 0;
+}
+
 int main() {
-    test12();
+    test14();
     return 0;
 }

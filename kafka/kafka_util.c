@@ -15,17 +15,7 @@
 
 #define MAX_TOPIC 100
 
-/* kafka producer handler */
-typedef struct u_rdkafka_producer_s {
-    rd_kafka_t * rk;
-    rd_kafka_conf_t * rk_conf;
-    rd_kafka_topic_t * rk_topic[100]; //max 100 topics
-    rd_kafka_topic_conf_t * rk_topic_conf;// only one topic conf
-    char err_msg[1024];
-    char broker_list[1024];
-    char topics[100][64];
-    int topic_len;
-} u_rdkafka_producer, *u_rdkafka_producerp;
+
 
 void rd_logger(const rd_kafka_t *rkt, int level, const char *fac, const char *buf) {
     struct timeval tv;
@@ -166,5 +156,20 @@ int u_rdkafka_send(u_rdkafka_producerp handler, const char * topic, void * paylo
  */
 int u_rdkafka_producer_close(u_rdkafka_producerp handler) {
     rd_kafka_poll(handler->rk, 0);
-    while (rd_kaf)
+    while (rd_kafka_outq_len(handler->rk) > 0)
+        rd_kafka_poll(handler->rk, 100);
+    for(int i = 0; i <= handler->topic_len - 1; i++)
+        rd_kafka_topic_destroy(handler->rk_topic[i]);
+    rd_kafka_destroy(handler->rk);
+    if(handler->rk_topic_conf)
+        rd_kafka_topic_conf_destroy(handler->rk_topic_conf);
+    int run = 5;
+    while (run-- && rd_kafka_wait_destroyed(1000) == -1)
+        printf("Waiting for librdkafka to decommossion\n");
+    if(run <= 0)
+        rd_kafka_dump(stdout, handler->rk);
+    if(handler)
+        free(handler);
+    handler = NULL;
+    return 0;
 }
