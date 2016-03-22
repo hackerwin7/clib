@@ -8,7 +8,9 @@ include_directories(include common)
 
 # set source path
 set(SOURCE_FILES main.c zk-lib/zk_util.h zk-lib/zk_util.c gzip-lib/gzip_util.h gzip-lib/gzip_util.c base64-lib/base64_util.h
-        base64-lib/base64_util.c protobuf/ngmsg.pb-c.h protobuf/ngmsg.pb-c.c protobuf/ngmsg_util.h protobuf/ngmsg_util.c common/common.h common/common.c common/gc_ring_buffer.h common/gc_ring_buffer.c kafka/kafka_util.h kafka/kafka_util.c)
+        base64-lib/base64_util.c protobuf/ngmsg.pb-c.h protobuf/ngmsg.pb-c.c protobuf/ngmsg_util.h protobuf/ngmsg_util.c
+        common/common.h common/common.c common/gc_ring_buffer.h common/gc_ring_buffer.c kafka/kafka_util.h kafka/kafka_util.c
+        kafka/m_librdkafka.c kafka/m_librdkafka.h)
 
 # set lib source
 set(SOURCE_LIBS_CLIB ${SOURCE_FILES}

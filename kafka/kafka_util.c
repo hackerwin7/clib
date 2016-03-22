@@ -63,9 +63,10 @@ int u_rdkafka_config_topic_set(u_rdkafka_producerp handle, const char *name, con
 
 /**
  * init the kafka handler
+ * @param brokers
  * @return u_rdkafka_producerp
  */
-u_rdkafka_producerp u_rdkafka_producer_init(const char *brokers) {
+u_rdkafka_producerp u_rdkafka_producer_init() {
     u_rdkafka_producerp p = (u_rdkafka_producerp) malloc(sizeof(u_rdkafka_producer));
     p->topic_len = 0;
     p->rk_conf = rd_kafka_conf_new();
@@ -76,6 +77,15 @@ u_rdkafka_producerp u_rdkafka_producer_init(const char *brokers) {
     u_rdkafka_config_topic_set(p, "produce.offset.report", "true");
     rd_kafka_conf_set_log_cb(p->rk_conf, rd_logger);
     rd_kafka_conf_set_dr_msg_cb(p->rk_conf, msg_delivered2);
+    return p;
+}
+
+/**
+ * build the rk kafka handler
+ * @param brokers
+ * @return status
+ */
+int u_rdkafka_producer_connect(u_rdkafka_producerp p, const char * brokers) {
     p->rk = rd_kafka_new(RD_KAFKA_PRODUCER, p->rk_conf, p->err_msg, sizeof(p->err_msg));
     if(!p->rk) {
         fprintf(stderr, "%% Failed to create new producer: %s\n", p->err_msg);
@@ -87,8 +97,10 @@ u_rdkafka_producerp u_rdkafka_producer_init(const char *brokers) {
         return NULL;
     }
     strcpy(p->broker_list, brokers);
-    return p;
+    return 0;
 }
+
+/* you may split the config and handler build and topic config and topic build ??? */
 
 /**
  * add a topic to handler
@@ -163,11 +175,12 @@ int u_rdkafka_producer_close(u_rdkafka_producerp handler) {
     rd_kafka_destroy(handler->rk);
     if(handler->rk_topic_conf)
         rd_kafka_topic_conf_destroy(handler->rk_topic_conf);
-    int run = 5;
+    int run = 10;
     while (run-- && rd_kafka_wait_destroyed(1000) == -1)
-        printf("Waiting for librdkafka to decommossion\n");
-    if(run <= 0)
-        rd_kafka_dump(stdout, handler->rk);
+        printf("Waiting for librdkafka to decommossion %d\n", run);
+//    if(run <= 0)
+//        rd_kafka_dump(stdout, handler->rk); // why blocked the dump???
+    printf("exiting librdkafka......");
     if(handler)
         free(handler);
     handler = NULL;

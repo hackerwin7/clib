@@ -9,10 +9,12 @@
 #include "sys/types.h"
 #include "sys/socket.h"
 #include "sys/ioctl.h"
+#include <sys/syscall.h>
 #include "netinet/in.h"
 #include "net/if.h"
 #include "arpa/inet.h"
 #include "ifaddrs.h"
+#include "netdb.h"
 
 #include "zk-lib/zk_util.h"
 #include "gzip-lib/gzip_util.h"
@@ -21,6 +23,7 @@
 #include "common/gc_ring_buffer.h"
 #include "librdkafka/rdkafka.h"
 #include "kafka/kafka_util.h"
+#include "kafka/m_librdkafka.h"
 /* declare header */
 void t_change_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx);
 
@@ -556,7 +559,9 @@ int test12() {
 }
 
 int test13() {
-    u_rdkafka_producerp producer = u_rdkafka_producer_init("localhost:9092");
+    u_rdkafka_producerp producer = u_rdkafka_producer_init();
+    //customer config
+    u_rdkafka_producer_connect(producer, "localhost:9092");
     u_rdkafka_add_topic(producer, "console");
     char * str = "kk monitor for librdkafka";
     u_rdkafka_send(producer, "console", str, strlen(str), NULL, 0);
@@ -585,30 +590,73 @@ int test14() {
     return 0;
 }
 
-void timer_calc(int signum) {
-    printf("timer task running...\n");
+int test15() {
+    char hname[128];
+    struct hostent * hent;
+    gethostname(hname, sizeof(hname));
+    hent = gethostbyname(hname);
+    if(hent->h_addr_list[1]) {
+        char * ip = inet_ntoa(*(struct in_addr*) (hent->h_addr_list[0]));
+        printf("%s\n", ip);
+    }
+    return 0;
 }
 
-int test15() {
-    struct sigaction sa;
-    struct itimerval timer;
+int test16() {
+    struct ifaddrs * ifaddr;
+    getifaddrs(&ifaddr);
+    struct ifaddrs * tmp = ifaddr;
+    while (tmp) {
+        if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET) {
+            struct sockaddr_in *pAddr = (struct sockaddr_in *) tmp->ifa_addr;
+            printf("%s: %s\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));
+        }
+        tmp = tmp->ifa_next;
+    }
+    freeifaddrs(ifaddr);
+}
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = &timer_handler;
-    sigaction(SIGVTALRM, &sa, NULL);
+int test17() {
+    char * str = malloc(sizeof(char) * 100);
+    char * data = "get out of here !!";
+    sprintf(str, "134 %s 321", data);
+    printf("%s\n", str);
+    free(str);// free str would not have effect on data, but free data will have effect on str, sprintf is not copy
+    printf("%s\n", data);
+    return 0;
+}
 
-    timer.it_value.tv_sec = 0;
-    timer.it_value.tv_usec = 250000;
-    timer.it_interval.tv_sec = 0;
-    timer.it_interval.tv_usec = 250000;
-    setitimer(ITIMER_VIRTUAL, &timer, NULL);
+/**
+ * callback for statistics to send monitor
+ * @param rk
+ * @param json
+ * @param json_len
+ * @param opaque
+ * @return free(0) or not free(1) json
+ */
+int stats_cb(rd_kafka_t *rk, char * json, size_t json_len, void * opaque) {
+    send_producer_status_monitor(json);//send status to monitor
+    return 0;
+}
 
-    while (1);
-
+int test18() {
+    u_rdkafka_producerp producer = u_rdkafka_producer_init();
+    u_rdkafka_config_set(producer, "statistics.interval.ms", "5000");
+    //set monitor callback
+    rd_kafka_conf_set_stats_cb(producer->rk_conf, stats_cb);
+    u_rdkafka_producer_connect(producer, "localhost:9092");
+    u_rdkafka_add_topic(producer, "console");
+    char str[128] = "kk monitor for librdkafka";
+    for(int i = 0; i <= 20 - 1; i++) {
+        sprintf(str, "kick clock monitor %d", i);
+        u_rdkafka_send(producer, "console", str, strlen(str), NULL, 0);
+        sleep(1);
+    }
+    u_rdkafka_producer_close(producer);
     return 0;
 }
 
 int main() {
-    test14();
+    test18();
     return 0;
 }

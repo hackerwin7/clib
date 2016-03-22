@@ -23,12 +23,14 @@ typedef struct u_rdkafka_producer_s {
 
 
 /* function header */
-u_rdkafka_producerp u_rdkafka_producer_init(const char *brokers);
+u_rdkafka_producerp u_rdkafka_producer_init();
 
 int u_rdkafka_config_set(u_rdkafka_producerp handle, const char *name, const char *value);
 int u_rdkafka_config_topic_set(u_rdkafka_producerp handle, const char *name, const char *value);
 
 int u_rdkafka_add_topic(u_rdkafka_producerp handle, const char * topic);
+
+int u_rdkafka_producer_connect(u_rdkafka_producerp p, const char * brokers);
 
 int u_rdkafka_send(u_rdkafka_producerp handler, const char * topic, void * payload, size_t paylen, void * key, size_t keylen);
 int u_rdkafka_producer_close(u_rdkafka_producerp handler);

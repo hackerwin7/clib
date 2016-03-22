@@ -82,7 +82,7 @@ void c_byte_buffer_free(c_byte_bufferp pt) {
  * get local machine ip
  * @return ip
  */
-char * get_local_ip() {
+char * c_get_local_ip() {
     int fd;
     struct ifreq ifr;
     fd = socket(AF_INET, SOCK_DGRAM, 0);
