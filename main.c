@@ -63,8 +63,10 @@ int gzip_de_compress_lu(void * s_bytes, size_t s_len, void * d_bytes, size_t * d
 
 /* protobuf */
 int pb_transfer_lu(int c, int64_t rtm, const char *ip, const char *d, c_byte_bufferp buffer) {
-    if(buffer && buffer->data)
+    if(buffer && buffer->data) {
         c_byte_buffer_free(buffer);//free old mem
+        buffer = NULL;
+    }
     if(!buffer) {
         buffer = c_byte_buffer_create();//only buffer!=NULL data==NULL can pass it
         put_ring_gc(buffer);// put into gc ring buffer
@@ -515,7 +517,7 @@ int test11() {
         strcat(buff, numstr);
         size_t len = strlen(buff);
         if(rd_kafka_produce(rktt, partition, RD_KAFKA_MSG_F_COPY, buff, len, NULL, 0, NULL) == -1) {
-            sprintf(stderr, "%% Failed to produce to topic %s partition %i: %s\n", rd_kafka_topic_name(rktt), partition, rd_kafka_err2str(rd_kafka_last_error()));
+            fprintf(stderr, "Failed to produce to topic %s partition %i: %s\n", rd_kafka_topic_name(rktt), partition, rd_kafka_err2str(rd_kafka_last_error()));
             rd_kafka_poll(rkt, 0);
             continue;
         }
@@ -657,6 +659,6 @@ int test18() {
 }
 
 int main() {
-    test18();
+    test11();
     return 0;
 }

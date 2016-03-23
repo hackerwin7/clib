@@ -13,7 +13,7 @@
 
 #include "zlib/zlib.h"
 
-#define MAX_BUFFER_LEN 20000
+#define MAX_BUFFER_LEN 20480
 
 /* struct */
 typedef struct gzip_data {

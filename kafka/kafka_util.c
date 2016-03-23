@@ -89,12 +89,12 @@ int u_rdkafka_producer_connect(u_rdkafka_producerp p, const char * brokers) {
     p->rk = rd_kafka_new(RD_KAFKA_PRODUCER, p->rk_conf, p->err_msg, sizeof(p->err_msg));
     if(!p->rk) {
         fprintf(stderr, "%% Failed to create new producer: %s\n", p->err_msg);
-        return NULL;
+        return -1;
     }
     rd_kafka_set_log_level(p->rk, LOG_DEBUG);
     if(!rd_kafka_brokers_add(p->rk, brokers)) {
         fprintf(stderr, "%% No valid brokers specified\n");
-        return NULL;
+        return -1;
     }
     strcpy(p->broker_list, brokers);
     return 0;
@@ -109,7 +109,7 @@ int u_rdkafka_producer_connect(u_rdkafka_producerp p, const char * brokers) {
  */
 int u_rdkafka_add_topic(u_rdkafka_producerp handle, const char * topic) {
     if(handle->topic_len >= MAX_TOPIC) {
-        sprintf(stderr, "[Err] : the handle reach to the max of the topic length %d, can not add topic.", MAX_TOPIC);
+        fprintf(stderr, "[Err] : the handle reach to the max of the topic length %d, can not add topic.", MAX_TOPIC);
         return -1;
     }
     //re-init the topic conf
@@ -150,7 +150,7 @@ int u_rdkafka_send(u_rdkafka_producerp handler, const char * topic, void * paylo
                             payload, paylen,
                             key, keylen,
                             NULL) == -1) {
-            sprintf(stderr, "%% Failed to produce to topic %s partition %i: %s\n",
+            fprintf(stderr, "%% Failed to produce to topic %s partition %i: %s\n",
                     rd_kafka_topic_name(handler->rk_topic[ti]),
                     RD_KAFKA_PARTITION_UA,
                     rd_kafka_err2str(rd_kafka_last_error()));
