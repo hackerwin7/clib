@@ -649,7 +649,7 @@ int test18() {
     u_rdkafka_producer_connect(producer, "localhost:9092");
     u_rdkafka_add_topic(producer, "console");
     char str[128] = "kk monitor for librdkafka";
-    for(int i = 0; i <= 20 - 1; i++) {
+    for(int i = 0; i <= 10 - 1; i++) {
         sprintf(str, "kick clock monitor %d", i);
         u_rdkafka_send(producer, "console", str, strlen(str), NULL, 0);
         sleep(1);
@@ -659,6 +659,6 @@ int test18() {
 }
 
 int main() {
-    test11();
+    test18();
     return 0;
 }
